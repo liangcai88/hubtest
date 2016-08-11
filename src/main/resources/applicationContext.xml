@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"  
+    xmlns:aop="http://www.springframework.org/schema/aop"  
+    xmlns:context="http://www.springframework.org/schema/context"  
+    xmlns:tx="http://www.springframework.org/schema/tx"  
+    xmlns:task="http://www.springframework.org/schema/task"  
+    xmlns:jpa="http://www.springframework.org/schema/data/jpa"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+    xsi:schemaLocation="http://www.springframework.org/schema/beans  
+        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+        http://www.springframework.org/schema/aop  
+        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd  
+        http://www.springframework.org/schema/context  
+        http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+        http://www.springframework.org/schema/tx   
+        http://www.springframework.org/schema/tx/spring-tx-4.0.xsd  
+        http://www.springframework.org/schema/task  
+        http://www.springframework.org/schema/task/spring-task-4.0.xsd  
+        http://www.springframework.org/schema/data/jpa  
+        http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">  
+      
+    <context:property-placeholder location="classpath:jdbc.properties"/>  
+      
+    <context:annotation-config />  
+    <context:component-scan base-package="com.jiayuan.jyspring.**">  
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>  
+    </context:component-scan>  
+      
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" >  
+        <property name="driverClass" value="${dataSource.className}" />  
+        <property name="jdbcUrl" value="${dataSource.url}" />  
+        <property name="user" value="${dataSource.username}" />  
+        <property name="password" value="${dataSource.password}" />  
+          
+        <!-- 连接关闭时默认将所有未提交的操作回滚。Default: false -->  
+        <property name="autoCommitOnClose" value="true" />  
+        <!-- 当连接池用完时客户端调用getConnection()后等待获取新连接的时间,超时后将抛出 SQLException,如设为0则无限期等待。单位毫秒。Default: 0-->   
+        <property name="checkoutTimeout" value="${cpool.checkoutTimeout}" />  
+        <!-- 初始化时获取的连接数，取值应在minPoolSize与maxPoolSize之间。Default: 3 -->  
+        <property name="initialPoolSize" value="${cpool.minPoolSize}" />  
+        <!-- 连接池中保留的最小连接数 -->  
+        <property name="minPoolSize" value="${cpool.minPoolSize}" />  
+        <!-- 连接池中保留的最大连接数。Default: 15 -->  
+        <property name="maxPoolSize" value="${cpool.maxPoolSize}" />  
+        <!-- 最大空闲时间,36000秒(10小时)内未使用则连接被丢弃。若为0则永不丢弃。Default: 0 -->  
+        <property name="maxIdleTime" value="${cpool.maxIdleTime}" />  
+        <property name="maxIdleTimeExcessConnections" value="${cpool.maxIdleTimeExcessConnections}" />  
+        <!-- 当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。Default: 3 -->  
+        <property name="acquireIncrement" value="${cpool.acquireIncrement}" />  
+        <!-- 定义在从数据库获取新连接失败后重复尝试的次数。Default: 30 -->  
+        <property name="acquireRetryAttempts" value="${cpool.acquireRetryAttempts}" />  
+        <!-- 两次连接中间隔时间，单位毫秒。Default: 1000 -->  
+        <property name="acquireRetryDelay" value="${cpool.acquireRetryDelay}" />  
+    </bean>  
+      
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">  
+        <property name="dataSource" ref="dataSource" />  
+<!--         <property name="persistenceUnitName" value="Mysql" />   -->
+        <!-- <property name="persistenceXmlLocation" value="classpath:META-INF/persistence.xml" /> -->  
+        <property name="persistenceProvider" ref="persistenceProvider" />  
+        <property name="jpaDialect" ref="jpaDialect" />  
+        <property name="jpaVendorAdapter" ref="jpaVendorAdapter" />  
+        <property name="packagesToScan" value="com.jiayuan.jyspring.db.jpa"/>  
+        <property name="jpaProperties">  
+            <props>  
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>  
+                <prop key="hibernate.temp.use_jdbc_metadata_defaults">${hibernate.temp.use_jdbc_metadata_defaults}</prop>  
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>  
+                <prop key="hibernate.format_sql">${hibernate.format_sql}</prop>  
+                <prop key="hibernate.max_fetch_depth">${hibernate.max_fetch_depth}</prop>  
+                <prop key="hibernate.jdbc.fetch_size">${hibernate.jdbc.fetch_size}</prop>  
+                <prop key="hibernate.jdbc.batch_size">${hibernate.jdbc.batch_size}</prop>  
+            </props>  
+        </property>  
+    </bean>  
+      
+    <!-- <bean class="org.hibernate.jpa.HibernatePersistenceProvider" /> -->  
+    <bean id="persistenceProvider" class="org.hibernate.jpa.HibernatePersistenceProvider" />  
+    <bean id="jpaDialect" class="org.springframework.orm.jpa.vendor.HibernateJpaDialect" />  
+    <bean id="jpaVendorAdapter" class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">  
+        <property name="database" value="MYSQL"></property>  
+    </bean>  
+      
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">  
+        <property name="entityManagerFactory" ref="entityManagerFactory" />  
+    </bean>  
+      
+    <!-- 事务装配 -->  
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">  
+        <tx:attributes>  
+            <tx:method name="add*" propagation="REQUIRED"/>  
+            <tx:method name="save*" propagation="REQUIRED"/>  
+            <tx:method name="insert*" propagation="REQUIRED"/>  
+            <tx:method name="update*" propagation="REQUIRED"/>  
+            <tx:method name="delete*" propagation="REQUIRED"/>  
+            <tx:method name="query*" propagation="NOT_SUPPORTED"/>  
+            <tx:method name="get*" propagation="NOT_SUPPORTED"/>  
+            <tx:method name="find*" propagation="NOT_SUPPORTED"/>  
+            <tx:method name="*" propagation="REQUIRED"/>  
+        </tx:attributes>  
+    </tx:advice>  
+      
+    <aop:config>  
+        <aop:pointcut expression="execution(* com.jiayuan.jyspring.**.service.*.*(..))" id="txPointcut"/>  
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut"/>  
+    </aop:config>  
+      
+    <tx:annotation-driven transaction-manager="transactionManager" />  
+  
+    <aop:aspectj-autoproxy />  
+      
+    <jpa:repositories base-package="com.jiayuan.jyspring.db.dao"   
+        entity-manager-factory-ref="entityManagerFactory"  
+        transaction-manager-ref="transactionManager"/>  
+      
+    <task:annotation-driven />  
+      
+      
+      
+</beans>  
