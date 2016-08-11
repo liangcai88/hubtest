@@ -15,4 +15,4 @@ public interface  UserModelRepository extends  JpaRepository<UserModel, Long> , 
 	    @Query("select s from UserModel s where s.id = ?1")  
 	    List<UserModel> findById(Long id);    
 }
- 
+    
